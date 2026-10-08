@@ -17,9 +17,11 @@ const client = new Client({
   }),
   puppeteer: {
     headless: true,
+    executablePath: "/usr/bin/chromium",
     args: [
       "--no-sandbox",
-      "--disable-setuid-sandbox"
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage"
     ]
   }
 });
@@ -52,7 +54,7 @@ app.get("/api/status", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor funcionando en puerto ${PORT}`);
   client.initialize();
 });
