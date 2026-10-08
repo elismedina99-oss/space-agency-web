@@ -1,4 +1,6 @@
 const express = require("express");
+const QRCode = require("qrcode");
+const { Client, LocalAuth } = require("whatsapp-web.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -6,13 +8,51 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static("public"));
 
+let qrCode = null;
+let connected = false;
+
+const client = new Client({
+  authStrategy: new LocalAuth({
+    clientId: "space-agency"
+  }),
+  puppeteer: {
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ]
+  }
+});
+
+client.on("qr", async (qr) => {
+  try {
+    qrCode = await QRCode.toDataURL(qr);
+    connected = false;
+    console.log("QR generado");
+  } catch (error) {
+    console.error("Error generando QR:", error);
+  }
+});
+
+client.on("ready", () => {
+  qrCode = null;
+  connected = true;
+  console.log("WhatsApp conectado 🚀");
+});
+
+client.on("disconnected", () => {
+  connected = false;
+  console.log("WhatsApp desconectado");
+});
+
 app.get("/api/status", (req, res) => {
   res.json({
-    ok: true,
-    message: "Space Agency Web está funcionando 🚀"
+    connected,
+    qr: qrCode
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor iniciado en el puerto ${PORT}`);
+  console.log(`Servidor funcionando en puerto ${PORT}`);
+  client.initialize();
 });
